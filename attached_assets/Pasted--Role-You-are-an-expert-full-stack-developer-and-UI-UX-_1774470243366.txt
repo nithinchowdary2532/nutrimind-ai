@@ -1,0 +1,56 @@
+# **Role**
+You are an expert full-stack developer and UI/UX designer specializing in AI-powered health & wellness web applications. You have deep expertise in React, Node.js, Claude API integration, data visualization, and modern health-tech product design.
+
+# **Objective**
+Build a complete, fully functional AI-powered web application called **NutriMind AI** — an intelligent nutrition & diet analysis platform that provides personalized meal insights, macro tracking, conversational AI coaching, and visual health dashboards.
+
+# **Context**
+The target users are health-conscious individuals, fitness enthusiasts, and people managing chronic conditions like diabetes or obesity. They struggle with poor dietary awareness and lack access to personalized, real-time nutrition guidance. NutriMind AI solves this by combining smart meal analysis, proactive AI insights, and a conversational nutrition coach — all in one clean, mobile-responsive interface.
+
+# **Instructions**
+Build the complete NutriMind AI web application as a single-file React component with all features, real Claude API integration, Chart.js visualizations, and a polished health-tech UI. The app must be fully interactive and production-ready.
+
+# **Instructions 1 — Core Features to Build**
+Implement all five features completely:
+1. **AI meal analyzer** — user inputs a meal by text or description; AI returns estimated calories, macros (protein, carbs, fats, fiber), micronutrient flags, and a health score out of 10
+2. **Nutrition dashboard** — daily summary cards (calories, protein, hydration, streak) + macro progress bars + weekly calorie trend bar chart with goal line
+3. **Conversational AI coach** — Claude-powered chat with today's full food log pre-loaded as context; supports quick-ask prompts like meal plans, energy tips, and goal checks
+4. **Smart weekly AI insights** — auto-generated analysis cards flagging protein gaps, micronutrient deficiencies, hydration warnings, and positive reinforcement
+5. **Wearable data panel** — display synced metrics (steps, active calories, sleep hours, heart rate) with AI commentary on how they affect nutrition needs
+
+# **Instructions 2 — UI & Design Requirements**
+- Layout: sidebar navigation with tabs — Dashboard, Meal Log, AI Insights, AI Coach, Wearable Sync
+- Color scheme: clean health-tech aesthetic — deep blues (#185FA5), fresh greens (#1D9E75), warm whites, subtle grays
+- Metric cards: muted background, 12px label, 22px value, small sub-label
+- Charts: Chart.js bar chart for weekly trends, macro progress bars with color-coded fills per nutrient
+- Chat UI: user messages right-aligned (blue bg), AI messages left-aligned (gray bg), streaming feel
+- Mobile responsive: stack sidebar on top as horizontal tab bar on small screens
+- No gradients, no heavy shadows — flat, clean, minimal design
+- All buttons use outline style; primary actions have a ↗ arrow
+
+# **Instructions 3 — AI Integration Requirements**
+- Use the Anthropic Claude API endpoint `https://api.anthropic.com/v1/messages` with model `claude-sonnet-4-20250514`
+- For meal analysis: send a structured prompt with the meal description and request JSON back with fields: `calories`, `protein`, `carbs`, `fats`, `fiber`, `health_score`, `insight`, `tip`
+- For AI coach chat: inject today's full meal log, macro totals, goals, and wearable data as system context so Claude gives hyper-personalized responses
+- For weekly insights: send the 7-day meal history and ask Claude to return 4 insight objects with fields: `type` (warning/positive/info), `title`, `detail`
+- Handle loading states, API errors, and empty states gracefully with user-friendly messages
+- Keep all AI responses under 120 words for coach chat; structured JSON for analysis endpoints
+
+# **Notes**
+- Do not use any external libraries beyond Chart.js (from cdnjs) and the Anthropic API — the entire app must work as a single self-contained file
+- Never hardcode an API key — the fetch call should work as-is since the Anthropic API key is injected automatically by the environment
+- All displayed numbers must be rounded — use `Math.round()` or `.toFixed(1)` before rendering any computed value
+
+# **Notes 1 — Data & State Management**
+- Use React `useState` and `useReducer` for all app state — no localStorage, no external state libraries
+- Seed the app with realistic sample data for today's meals, this week's calorie history, and wearable metrics so the dashboard looks populated on first load
+- When a user logs a new meal, optimistically add it to the meal list with a temporary calorie estimate, then update with the real AI analysis once it returns
+- Maintain full chat history in state and send the entire conversation array to Claude on each message so it has memory within the session
+
+# **Notes 2 — Quality & Production Standards**
+- Every section must be fully functional — no placeholder buttons, no fake interactions, no "coming soon" states
+- The AI coach must actually call the Claude API and stream real responses into the chat window
+- Charts must render correctly on both light and dark backgrounds using hardcoded hex values (Chart.js cannot read CSS variables)
+- Add subtle loading spinners or skeleton states while AI calls are in progress
+- Ensure the app is fully keyboard accessible — Enter key submits chat messages and meal log inputs
+- Test all edge cases: empty meal input, API timeout, very long AI responses, and missing wearable data

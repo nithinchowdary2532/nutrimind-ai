@@ -6,4 +6,17 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./anthropicConversation";
+export * from "./anthropicConversationWithMessages";
+export * from "./anthropicError";
+export * from "./anthropicMessage";
+export * from "./createAnthropicConversationBody";
+export * from "./createMealBody";
 export * from "./healthStatus";
+export * from "./listMealsParams";
+export * from "./meal";
+export * from "./nutritionError";
+export * from "./nutritionInsight";
+export * from "./nutritionInsightType";
+export * from "./sendAnthropicMessageBody";
+export * from "./wearableData";

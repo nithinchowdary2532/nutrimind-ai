@@ -8,3 +8,90 @@
 export interface HealthStatus {
   status: string;
 }
+
+export interface Meal {
+  id: number;
+  description: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
+  fiber: number;
+  healthScore: number;
+  insight: string;
+  tip: string;
+  mealTime: string;
+  createdAt: string;
+}
+
+export interface CreateMealBody {
+  description: string;
+  mealTime: string;
+}
+
+export type NutritionInsightType =
+  (typeof NutritionInsightType)[keyof typeof NutritionInsightType];
+
+export const NutritionInsightType = {
+  warning: "warning",
+  positive: "positive",
+  info: "info",
+} as const;
+
+export interface NutritionInsight {
+  id: number;
+  type: NutritionInsightType;
+  title: string;
+  detail: string;
+  createdAt: string;
+}
+
+export interface WearableData {
+  steps: number;
+  activeCalories: number;
+  sleepHours: number;
+  heartRate: number;
+  aiCommentary: string;
+  updatedAt: string;
+}
+
+export interface NutritionError {
+  error: string;
+}
+
+export interface AnthropicConversation {
+  id: number;
+  title: string;
+  createdAt: string;
+}
+
+export interface AnthropicMessage {
+  id: number;
+  conversationId: number;
+  role: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface CreateAnthropicConversationBody {
+  title: string;
+}
+
+export interface SendAnthropicMessageBody {
+  content: string;
+}
+
+export interface AnthropicConversationWithMessages {
+  id: number;
+  title: string;
+  createdAt: string;
+  messages: AnthropicMessage[];
+}
+
+export interface AnthropicError {
+  error: string;
+}
+
+export type ListMealsParams = {
+  date?: string;
+};

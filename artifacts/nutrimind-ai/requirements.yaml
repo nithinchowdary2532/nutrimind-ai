@@ -1,0 +1,16 @@
+packages:
+  "recharts": "For the weekly calorie trend chart"
+  "framer-motion": "For page transitions and smooth UI animations"
+  "date-fns": "For formatting dates in the meal log and chat"
+  "clsx": "For conditional class name joining"
+  "tailwind-merge": "For merging tailwind classes safely"
+  "lucide-react": "For UI icons"
+
+images:
+  - path: "artifacts/nutrimind-ai/public/images/logo.png"
+    description: "A very minimal, flat vector logo for a health-tech app called NutriMind AI. Deep blue and fresh green colors. Clinical, professional, geometric."
+    aspect_ratio: "1:1"
+
+notes:
+  - "The Anthropic SSE chat stream is handled manually using fetch and ReadableStream since Orval doesn't generate hooks for event streams."
+  - "Using `@workspace/api-client-react` for all generated TanStack Query hooks."

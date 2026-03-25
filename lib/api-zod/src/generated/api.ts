@@ -14,3 +14,144 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * @summary List all meals
+ */
+export const ListMealsQueryParams = zod.object({
+  date: zod.coerce.string().optional(),
+});
+
+export const ListMealsResponseItem = zod.object({
+  id: zod.number(),
+  description: zod.string(),
+  calories: zod.number(),
+  protein: zod.number(),
+  carbs: zod.number(),
+  fats: zod.number(),
+  fiber: zod.number(),
+  healthScore: zod.number(),
+  insight: zod.string(),
+  tip: zod.string(),
+  mealTime: zod.string(),
+  createdAt: zod.date(),
+});
+export const ListMealsResponse = zod.array(ListMealsResponseItem);
+
+/**
+ * @summary Create and analyze a new meal
+ */
+export const CreateMealBody = zod.object({
+  description: zod.string(),
+  mealTime: zod.string(),
+});
+
+/**
+ * @summary Delete a meal
+ */
+export const DeleteMealParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary Get AI-generated weekly insights
+ */
+export const GetWeeklyInsightsResponseItem = zod.object({
+  id: zod.number(),
+  type: zod.enum(["warning", "positive", "info"]),
+  title: zod.string(),
+  detail: zod.string(),
+  createdAt: zod.date(),
+});
+export const GetWeeklyInsightsResponse = zod.array(
+  GetWeeklyInsightsResponseItem,
+);
+
+/**
+ * @summary Get wearable device metrics
+ */
+export const GetWearableDataResponse = zod.object({
+  steps: zod.number(),
+  activeCalories: zod.number(),
+  sleepHours: zod.number(),
+  heartRate: zod.number(),
+  aiCommentary: zod.string(),
+  updatedAt: zod.date(),
+});
+
+/**
+ * @summary List all conversations
+ */
+export const ListAnthropicConversationsResponseItem = zod.object({
+  id: zod.number(),
+  title: zod.string(),
+  createdAt: zod.date(),
+});
+export const ListAnthropicConversationsResponse = zod.array(
+  ListAnthropicConversationsResponseItem,
+);
+
+/**
+ * @summary Create a new conversation
+ */
+export const CreateAnthropicConversationBody = zod.object({
+  title: zod.string(),
+});
+
+/**
+ * @summary Get conversation with messages
+ */
+export const GetAnthropicConversationParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetAnthropicConversationResponse = zod.object({
+  id: zod.number(),
+  title: zod.string(),
+  createdAt: zod.date(),
+  messages: zod.array(
+    zod.object({
+      id: zod.number(),
+      conversationId: zod.number(),
+      role: zod.string(),
+      content: zod.string(),
+      createdAt: zod.date(),
+    }),
+  ),
+});
+
+/**
+ * @summary Delete a conversation
+ */
+export const DeleteAnthropicConversationParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary List messages in a conversation
+ */
+export const ListAnthropicMessagesParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ListAnthropicMessagesResponseItem = zod.object({
+  id: zod.number(),
+  conversationId: zod.number(),
+  role: zod.string(),
+  content: zod.string(),
+  createdAt: zod.date(),
+});
+export const ListAnthropicMessagesResponse = zod.array(
+  ListAnthropicMessagesResponseItem,
+);
+
+/**
+ * @summary Send a message and receive an AI response (SSE stream)
+ */
+export const SendAnthropicMessageParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const SendAnthropicMessageBody = zod.object({
+  content: zod.string(),
+});

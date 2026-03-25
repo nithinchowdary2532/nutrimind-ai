@@ -5,18 +5,35 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  AnthropicConversation,
+  AnthropicConversationWithMessages,
+  AnthropicError,
+  AnthropicMessage,
+  CreateAnthropicConversationBody,
+  CreateMealBody,
+  HealthStatus,
+  ListMealsParams,
+  Meal,
+  NutritionError,
+  NutritionInsight,
+  SendAnthropicMessageBody,
+  WearableData,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -99,3 +116,939 @@ export function useHealthCheck<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary List all meals
+ */
+export const getListMealsUrl = (params?: ListMealsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/nutrition/meals?${stringifiedParams}`
+    : `/api/nutrition/meals`;
+};
+
+export const listMeals = async (
+  params?: ListMealsParams,
+  options?: RequestInit,
+): Promise<Meal[]> => {
+  return customFetch<Meal[]>(getListMealsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListMealsQueryKey = (params?: ListMealsParams) => {
+  return [`/api/nutrition/meals`, ...(params ? [params] : [])] as const;
+};
+
+export const getListMealsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listMeals>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListMealsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listMeals>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListMealsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listMeals>>> = ({
+    signal,
+  }) => listMeals(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listMeals>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListMealsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listMeals>>
+>;
+export type ListMealsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List all meals
+ */
+
+export function useListMeals<
+  TData = Awaited<ReturnType<typeof listMeals>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListMealsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listMeals>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListMealsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create and analyze a new meal
+ */
+export const getCreateMealUrl = () => {
+  return `/api/nutrition/meals`;
+};
+
+export const createMeal = async (
+  createMealBody: CreateMealBody,
+  options?: RequestInit,
+): Promise<Meal> => {
+  return customFetch<Meal>(getCreateMealUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createMealBody),
+  });
+};
+
+export const getCreateMealMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createMeal>>,
+    TError,
+    { data: BodyType<CreateMealBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createMeal>>,
+  TError,
+  { data: BodyType<CreateMealBody> },
+  TContext
+> => {
+  const mutationKey = ["createMeal"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createMeal>>,
+    { data: BodyType<CreateMealBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createMeal(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateMealMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createMeal>>
+>;
+export type CreateMealMutationBody = BodyType<CreateMealBody>;
+export type CreateMealMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create and analyze a new meal
+ */
+export const useCreateMeal = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createMeal>>,
+    TError,
+    { data: BodyType<CreateMealBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createMeal>>,
+  TError,
+  { data: BodyType<CreateMealBody> },
+  TContext
+> => {
+  return useMutation(getCreateMealMutationOptions(options));
+};
+
+/**
+ * @summary Delete a meal
+ */
+export const getDeleteMealUrl = (id: number) => {
+  return `/api/nutrition/meals/${id}`;
+};
+
+export const deleteMeal = async (
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteMealUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteMealMutationOptions = <
+  TError = ErrorType<NutritionError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteMeal>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteMeal>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteMeal"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteMeal>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteMeal(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteMealMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteMeal>>
+>;
+
+export type DeleteMealMutationError = ErrorType<NutritionError>;
+
+/**
+ * @summary Delete a meal
+ */
+export const useDeleteMeal = <
+  TError = ErrorType<NutritionError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteMeal>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteMeal>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteMealMutationOptions(options));
+};
+
+/**
+ * @summary Get AI-generated weekly insights
+ */
+export const getGetWeeklyInsightsUrl = () => {
+  return `/api/nutrition/insights`;
+};
+
+export const getWeeklyInsights = async (
+  options?: RequestInit,
+): Promise<NutritionInsight[]> => {
+  return customFetch<NutritionInsight[]>(getGetWeeklyInsightsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetWeeklyInsightsQueryKey = () => {
+  return [`/api/nutrition/insights`] as const;
+};
+
+export const getGetWeeklyInsightsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getWeeklyInsights>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getWeeklyInsights>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetWeeklyInsightsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getWeeklyInsights>>
+  > = ({ signal }) => getWeeklyInsights({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getWeeklyInsights>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetWeeklyInsightsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getWeeklyInsights>>
+>;
+export type GetWeeklyInsightsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get AI-generated weekly insights
+ */
+
+export function useGetWeeklyInsights<
+  TData = Awaited<ReturnType<typeof getWeeklyInsights>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getWeeklyInsights>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetWeeklyInsightsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get wearable device metrics
+ */
+export const getGetWearableDataUrl = () => {
+  return `/api/nutrition/wearable`;
+};
+
+export const getWearableData = async (
+  options?: RequestInit,
+): Promise<WearableData> => {
+  return customFetch<WearableData>(getGetWearableDataUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetWearableDataQueryKey = () => {
+  return [`/api/nutrition/wearable`] as const;
+};
+
+export const getGetWearableDataQueryOptions = <
+  TData = Awaited<ReturnType<typeof getWearableData>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getWearableData>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetWearableDataQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getWearableData>>> = ({
+    signal,
+  }) => getWearableData({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getWearableData>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetWearableDataQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getWearableData>>
+>;
+export type GetWearableDataQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get wearable device metrics
+ */
+
+export function useGetWearableData<
+  TData = Awaited<ReturnType<typeof getWearableData>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getWearableData>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetWearableDataQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List all conversations
+ */
+export const getListAnthropicConversationsUrl = () => {
+  return `/api/anthropic/conversations`;
+};
+
+export const listAnthropicConversations = async (
+  options?: RequestInit,
+): Promise<AnthropicConversation[]> => {
+  return customFetch<AnthropicConversation[]>(
+    getListAnthropicConversationsUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getListAnthropicConversationsQueryKey = () => {
+  return [`/api/anthropic/conversations`] as const;
+};
+
+export const getListAnthropicConversationsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listAnthropicConversations>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listAnthropicConversations>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListAnthropicConversationsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listAnthropicConversations>>
+  > = ({ signal }) => listAnthropicConversations({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listAnthropicConversations>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListAnthropicConversationsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listAnthropicConversations>>
+>;
+export type ListAnthropicConversationsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List all conversations
+ */
+
+export function useListAnthropicConversations<
+  TData = Awaited<ReturnType<typeof listAnthropicConversations>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listAnthropicConversations>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListAnthropicConversationsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a new conversation
+ */
+export const getCreateAnthropicConversationUrl = () => {
+  return `/api/anthropic/conversations`;
+};
+
+export const createAnthropicConversation = async (
+  createAnthropicConversationBody: CreateAnthropicConversationBody,
+  options?: RequestInit,
+): Promise<AnthropicConversation> => {
+  return customFetch<AnthropicConversation>(
+    getCreateAnthropicConversationUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(createAnthropicConversationBody),
+    },
+  );
+};
+
+export const getCreateAnthropicConversationMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createAnthropicConversation>>,
+    TError,
+    { data: BodyType<CreateAnthropicConversationBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createAnthropicConversation>>,
+  TError,
+  { data: BodyType<CreateAnthropicConversationBody> },
+  TContext
+> => {
+  const mutationKey = ["createAnthropicConversation"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createAnthropicConversation>>,
+    { data: BodyType<CreateAnthropicConversationBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createAnthropicConversation(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateAnthropicConversationMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createAnthropicConversation>>
+>;
+export type CreateAnthropicConversationMutationBody =
+  BodyType<CreateAnthropicConversationBody>;
+export type CreateAnthropicConversationMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create a new conversation
+ */
+export const useCreateAnthropicConversation = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createAnthropicConversation>>,
+    TError,
+    { data: BodyType<CreateAnthropicConversationBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createAnthropicConversation>>,
+  TError,
+  { data: BodyType<CreateAnthropicConversationBody> },
+  TContext
+> => {
+  return useMutation(getCreateAnthropicConversationMutationOptions(options));
+};
+
+/**
+ * @summary Get conversation with messages
+ */
+export const getGetAnthropicConversationUrl = (id: number) => {
+  return `/api/anthropic/conversations/${id}`;
+};
+
+export const getAnthropicConversation = async (
+  id: number,
+  options?: RequestInit,
+): Promise<AnthropicConversationWithMessages> => {
+  return customFetch<AnthropicConversationWithMessages>(
+    getGetAnthropicConversationUrl(id),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetAnthropicConversationQueryKey = (id: number) => {
+  return [`/api/anthropic/conversations/${id}`] as const;
+};
+
+export const getGetAnthropicConversationQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAnthropicConversation>>,
+  TError = ErrorType<AnthropicError>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getAnthropicConversation>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetAnthropicConversationQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getAnthropicConversation>>
+  > = ({ signal }) =>
+    getAnthropicConversation(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAnthropicConversation>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetAnthropicConversationQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAnthropicConversation>>
+>;
+export type GetAnthropicConversationQueryError = ErrorType<AnthropicError>;
+
+/**
+ * @summary Get conversation with messages
+ */
+
+export function useGetAnthropicConversation<
+  TData = Awaited<ReturnType<typeof getAnthropicConversation>>,
+  TError = ErrorType<AnthropicError>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getAnthropicConversation>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetAnthropicConversationQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Delete a conversation
+ */
+export const getDeleteAnthropicConversationUrl = (id: number) => {
+  return `/api/anthropic/conversations/${id}`;
+};
+
+export const deleteAnthropicConversation = async (
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteAnthropicConversationUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteAnthropicConversationMutationOptions = <
+  TError = ErrorType<AnthropicError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteAnthropicConversation>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteAnthropicConversation>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteAnthropicConversation"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteAnthropicConversation>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteAnthropicConversation(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteAnthropicConversationMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteAnthropicConversation>>
+>;
+
+export type DeleteAnthropicConversationMutationError =
+  ErrorType<AnthropicError>;
+
+/**
+ * @summary Delete a conversation
+ */
+export const useDeleteAnthropicConversation = <
+  TError = ErrorType<AnthropicError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteAnthropicConversation>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteAnthropicConversation>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteAnthropicConversationMutationOptions(options));
+};
+
+/**
+ * @summary List messages in a conversation
+ */
+export const getListAnthropicMessagesUrl = (id: number) => {
+  return `/api/anthropic/conversations/${id}/messages`;
+};
+
+export const listAnthropicMessages = async (
+  id: number,
+  options?: RequestInit,
+): Promise<AnthropicMessage[]> => {
+  return customFetch<AnthropicMessage[]>(getListAnthropicMessagesUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListAnthropicMessagesQueryKey = (id: number) => {
+  return [`/api/anthropic/conversations/${id}/messages`] as const;
+};
+
+export const getListAnthropicMessagesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listAnthropicMessages>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listAnthropicMessages>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListAnthropicMessagesQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listAnthropicMessages>>
+  > = ({ signal }) => listAnthropicMessages(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listAnthropicMessages>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListAnthropicMessagesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listAnthropicMessages>>
+>;
+export type ListAnthropicMessagesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List messages in a conversation
+ */
+
+export function useListAnthropicMessages<
+  TData = Awaited<ReturnType<typeof listAnthropicMessages>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listAnthropicMessages>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListAnthropicMessagesQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Send a message and receive an AI response (SSE stream)
+ */
+export const getSendAnthropicMessageUrl = (id: number) => {
+  return `/api/anthropic/conversations/${id}/messages`;
+};
+
+export const sendAnthropicMessage = async (
+  id: number,
+  sendAnthropicMessageBody: SendAnthropicMessageBody,
+  options?: RequestInit,
+): Promise<unknown> => {
+  return customFetch<unknown>(getSendAnthropicMessageUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(sendAnthropicMessageBody),
+  });
+};
+
+export const getSendAnthropicMessageMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendAnthropicMessage>>,
+    TError,
+    { id: number; data: BodyType<SendAnthropicMessageBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof sendAnthropicMessage>>,
+  TError,
+  { id: number; data: BodyType<SendAnthropicMessageBody> },
+  TContext
+> => {
+  const mutationKey = ["sendAnthropicMessage"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof sendAnthropicMessage>>,
+    { id: number; data: BodyType<SendAnthropicMessageBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return sendAnthropicMessage(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SendAnthropicMessageMutationResult = NonNullable<
+  Awaited<ReturnType<typeof sendAnthropicMessage>>
+>;
+export type SendAnthropicMessageMutationBody =
+  BodyType<SendAnthropicMessageBody>;
+export type SendAnthropicMessageMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Send a message and receive an AI response (SSE stream)
+ */
+export const useSendAnthropicMessage = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendAnthropicMessage>>,
+    TError,
+    { id: number; data: BodyType<SendAnthropicMessageBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof sendAnthropicMessage>>,
+  TError,
+  { id: number; data: BodyType<SendAnthropicMessageBody> },
+  TContext
+> => {
+  return useMutation(getSendAnthropicMessageMutationOptions(options));
+};
